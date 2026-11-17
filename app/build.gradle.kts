@@ -9,7 +9,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "es.davante.edadcanina"
+        applicationId = "es.davante.edadcanina.mvc"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
@@ -28,6 +28,12 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    // Activamos DataBinding para que Android genere clases que enlacen
+    // el XML con objetos Java y así no tener que usar findViewById
+    buildFeatures {
+        dataBinding = true
     }
 }
 
