@@ -191,3 +191,58 @@ Comprueba en GitHub que tu fork tiene ahora dos ramas: `main` y `v2-validacion`.
 - [ ] No quedan números mágicos en `MainActivity`.
 - [ ] `onCreate()` solo prepara la pantalla; la lógica está en `calcularEdad()`.
 - [ ] El trabajo está en la rama `v2-validacion`, no en `main`.
+
+---
+
+## EdadCaninaMVC
+
+Versión 3 de la app (rama `v3-mvc`): hace lo mismo que la v2, pero organizada con **DataBinding** y el patrón **MVC**:
+
+- **Modelo** (`modelo`): `EdadCaninaModelo` y el enum `Validacion`. Guarda el texto, la edad humana y la validación, valida, calcula y avisa cuando algo cambia (`BaseObservable`). No importa nada de `android.*`.
+- **Vista** (`activity_main.xml` + `vista/AdaptadoresVista`): se pinta sola a partir del modelo con `@{}` y `@={}`, y muestra los errores con el atributo propio `app:errorValidacion`.
+- **Controlador** (`controlador/EdadCaninaControlador`): recibe los clics de Calcular y Limpiar desde el XML y da órdenes al modelo.
+- **MainActivity**: solo crea las piezas, las conecta y guarda el estado al girar.
+
+Cada paso tiene su commit y su etiqueta (`paso-1` … `paso-7`). Hay 14 pruebas JUnit en `app/src/test`.
+
+### Reto elegido: Teclado
+
+Al pulsar la tecla «Hecho» del teclado se calcula la edad, igual que con el botón Calcular.
+
+Cómo lo he resuelto:
+
+1. En el `EditText` he puesto `android:imeOptions="actionDone"` para que la tecla de abajo a la derecha del teclado sea «Hecho».
+2. En `AdaptadoresVista` he creado un segundo `@BindingAdapter`, `app:alPulsarHecho`, que recibe una acción (una interfaz `AccionTeclado` con un solo método, para poder escribirla como lambda en el XML).
+3. El adaptador pone un `OnEditorActionListener` al campo: si la acción es `IME_ACTION_DONE`, ejecuta la acción. Devuelve `false` para que Android también cierre el teclado.
+4. En el XML lo enlazo con el controlador: `app:alPulsarHecho="@{() -> controlador.calcular()}"`.
+
+Así la tecla «Hecho» hace lo mismo que el botón, y la `MainActivity` sigue sin tener ningún listener.
+
+### Explícalo con tus palabras
+
+**1. ¿Qué diferencia hay entre `@{...}` y `@={...}`?**
+
+`@{...}` es un enlace en un solo sentido, del modelo a la vista: cuando el modelo avisa de un cambio, la vista se actualiza, pero lo que haga el usuario no vuelve al modelo. Lo uso en el resultado (texto y visibilidad) y en el error.
+
+`@={...}` es un enlace en los dos sentidos: además de lo anterior, cuando el usuario cambia la vista se llama al setter del modelo. Lo uso en el `EditText`: cada cifra que escribo llama a `setEdadTexto()`, así que el modelo siempre tiene el texto y no hace falta leerlo con `getText()`. Por eso el setter comprueba si el texto ha cambiado antes de avisar; si no, la vista y el modelo se llamarían el uno al otro sin parar.
+
+**2. ¿Qué ocurre, paso a paso, desde que pulsas Calcular hasta que aparece «42»?**
+
+1. Al escribir `6`, el enlace `@={modelo.edadTexto}` ya ha llamado a `modelo.setEdadTexto("6")`.
+2. Pulso Calcular. El `android:onClick="@{() -> controlador.calcular()}"` llama al controlador.
+3. El controlador llama a `modelo.calcular()`.
+4. El modelo quita espacios, comprueba que no está vacío, lo convierte con `Integer.parseInt` (6) y comprueba que está entre 1 y 30.
+5. Calcula `6 * FACTOR_CANINO = 42` y llama a `setEdadHumana(42)` y `setValidacion(OK)`. Cada setter hace `notifyPropertyChanged(BR.edadHumana)` y `notifyPropertyChanged(BR.validacion)`.
+6. La clase generada `ActivityMainBinding` está escuchando al modelo. Al recibir el aviso, vuelve a evaluar las expresiones que usan esas propiedades:
+   - el texto del resultado: `@string/tu_edad_format(modelo.edadHumana)` → «Si tu perro fuera humano tendría 42 años»;
+   - la visibilidad: como la validación es `OK`, pasa a `VISIBLE`;
+   - `app:errorValidacion` recibe `OK` y quita el error del campo.
+7. En pantalla aparece «42». La `MainActivity` no ha hecho nada en todo el proceso.
+
+**3. ¿Qué cambiarías para que el factor fuera 6 en vez de 7, y por qué solo tocas un fichero?**
+
+Solo cambiaría `FACTOR_CANINO = 7` por `FACTOR_CANINO = 6` en `EdadCaninaModelo.java`.
+
+Solo hay que tocar ese fichero porque el factor es una regla de negocio y todas las reglas están en el modelo, en una constante. La vista solo muestra `edadHumana` (no sabe cómo se calcula), el controlador solo llama a `calcular()` y la `MainActivity` solo conecta piezas. Ninguna de ellas usa el 7.
+
+Las pruebas JUnit que esperan 42, 7 o 210 fallarían, y habría que actualizarlas con los valores nuevos. Eso es bueno: las pruebas avisan de que ha cambiado una regla.
