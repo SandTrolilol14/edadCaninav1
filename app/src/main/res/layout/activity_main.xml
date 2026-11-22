@@ -57,6 +57,7 @@
             android:inputType="number"
             android:maxLength="2"
             android:text="@={modelo.edadTexto}"
+            app:errorValidacion="@{modelo.validacion}"
             android:textSize="48sp" />
 
         <TextView
