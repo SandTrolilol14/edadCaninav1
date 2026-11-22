@@ -12,10 +12,7 @@ import es.davante.edadcanina.modelo.Validacion;
 
 public class MainActivity extends AppCompatActivity {
 
-    // El binding sustituye a todos los findViewById
     private ActivityMainBinding binding;
-
-    // Las reglas (constantes, validar, calcular) ya no están aquí: están en el modelo
     private EdadCaninaModelo modelo;
 
     @Override
@@ -26,20 +23,22 @@ public class MainActivity extends AppCompatActivity {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         modelo = new EdadCaninaModelo();
 
+        // Entregamos el modelo a la vista. El método se llama setModelo
+        // porque la <variable> del XML se llama "modelo"
+        binding.setModelo(modelo);
+
         binding.btnCalc.setOnClickListener(view -> calcularEdad());
     }
 
     private void calcularEdad() {
-        // La Activity solo pasa el texto al modelo y le pide que calcule
-        modelo.setEdadTexto(binding.ageInput.getText().toString());
+        // Ya no leemos el EditText: gracias a @={...} el modelo ya tiene el texto.
+        // Tampoco hacemos setText del resultado: el XML se repinta solo al avisar el modelo
         Validacion resultado = modelo.calcular();
 
-        // Según la respuesta del modelo, la Activity decide qué pintar.
-        // Los textos salen de strings.xml porque el modelo no debe tener textos
+        // El error todavía lo pintamos a mano (en el paso 5 lo pasamos al XML)
         switch (resultado) {
             case OK:
                 binding.ageInput.setError(null);
-                binding.resultText.setText(getString(R.string.tu_edad_format, modelo.getEdadHumana()));
                 break;
             case VACIO:
                 mostrarError(getString(R.string.error_vacio));
@@ -52,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
                         EdadCaninaModelo.EDAD_MINIMA, EdadCaninaModelo.EDAD_MAXIMA));
                 break;
             default:
-                // SIN_CALCULAR no puede llegar aquí justo después de calcular()
                 break;
         }
     }
@@ -60,6 +58,5 @@ public class MainActivity extends AppCompatActivity {
     private void mostrarError(String mensaje) {
         binding.ageInput.setError(mensaje);
         binding.ageInput.requestFocus();
-        binding.resultText.setText("");
     }
 }

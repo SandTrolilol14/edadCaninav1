@@ -1,9 +1,19 @@
 package es.davante.edadcanina.modelo;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import androidx.databinding.Observable;
+
+import es.davante.edadcanina.BR;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
 
 
 public class EdadCaninaModeloTest {
@@ -79,5 +89,36 @@ public class EdadCaninaModeloTest {
         modelo.setEdadTexto("7");
         assertEquals(Validacion.SIN_CALCULAR, modelo.getValidacion());
         assertEquals(0, modelo.getEdadHumana());
+    }
+
+    // Simula ser la vista: apunta qué propiedades le avisa el modelo
+    private List<Integer> escucharAvisos() {
+        List<Integer> avisos = new ArrayList<>();
+        modelo.addOnPropertyChangedCallback(new Observable.OnPropertyChangedCallback() {
+            @Override
+            public void onPropertyChanged(Observable sender, int propertyId) {
+                avisos.add(propertyId);
+            }
+        });
+        return avisos;
+    }
+
+    @Test
+    public void calcular_avisaALaVista() {
+        // Sin este aviso la pantalla no se enteraría del nuevo resultado
+        modelo.setEdadTexto("6");
+        List<Integer> avisos = escucharAvisos();
+        modelo.calcular();
+        assertTrue(avisos.contains(BR.edadHumana));
+        assertTrue(avisos.contains(BR.validacion));
+    }
+
+    @Test
+    public void mismoTexto_noAvisa() {
+        // Si avisara siempre, el enlace bidireccional entraría en un bucle infinito
+        modelo.setEdadTexto("6");
+        List<Integer> avisos = escucharAvisos();
+        modelo.setEdadTexto("6");
+        assertFalse(avisos.contains(BR.edadTexto));
     }
 }
