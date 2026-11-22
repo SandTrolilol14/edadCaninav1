@@ -62,6 +62,8 @@
             android:maxLength="2"
             android:text="@={modelo.edadTexto}"
             app:errorValidacion="@{modelo.validacion}"
+            android:imeOptions="actionDone"
+            app:alPulsarHecho="@{() -> controlador.calcular()}"
             android:textSize="48sp" />
 
         <TextView

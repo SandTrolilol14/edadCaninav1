@@ -1,5 +1,7 @@
 package es.davante.edadcanina.vista;
 
+import android.view.inputmethod.EditorInfo;
+
 import android.content.Context;
 import android.widget.EditText;
 
@@ -49,5 +51,24 @@ public class AdaptadoresVista {
         if (mensaje != null) {
             campo.requestFocus();
         }
+    }
+
+    public interface AccionTeclado {
+        void ejecutar();
+    }
+
+    @BindingAdapter("alPulsarHecho")
+    public static void setAlPulsarHecho(EditText campo, AccionTeclado accion) {
+        if (accion == null) {
+            campo.setOnEditorActionListener(null);
+            return;
+        }
+        campo.setOnEditorActionListener((vista, idAccion, evento) -> {
+            if (idAccion == EditorInfo.IME_ACTION_DONE) {
+                accion.ejecutar();
+            }
+
+            return false;
+        });
     }
 }
