@@ -6,12 +6,12 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 
+import es.davante.edadcanina.controlador.EdadCaninaControlador;
 import es.davante.edadcanina.databinding.ActivityMainBinding;
 import es.davante.edadcanina.modelo.EdadCaninaModelo;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ActivityMainBinding binding;
     private EdadCaninaModelo modelo;
 
     @Override
@@ -19,15 +19,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        // Vista: inflamos el layout y obtenemos el binding
+        ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+
+        // Modelo y controlador. El controlador recibe el modelo para poder darle órdenes
         modelo = new EdadCaninaModelo();
+        EdadCaninaControlador controlador = new EdadCaninaControlador(modelo);
 
-        // Entregamos el modelo a la vista. El método se llama setModelo
-        // porque la <variable> del XML se llama "modelo"
+        // Entregamos las dos piezas a la vista: un setter por cada <variable> del XML
         binding.setModelo(modelo);
-
-        // Solo pedimos al modelo que calcule: el resultado (@{...}) y el error
-        // (app:errorValidacion) los pinta el XML solo cuando el modelo avisa
-        binding.btnCalc.setOnClickListener(view -> modelo.calcular());
+        binding.setControlador(controlador);
     }
 }
